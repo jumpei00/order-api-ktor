@@ -1,0 +1,13 @@
+.gradle/
+.kotlin/
+build/
+bin/
+
+.classpath
+.project
+.settings/
+
+*.iml
+.idea/
+
+*.log
