@@ -28,6 +28,16 @@ data class Order private constructor(
     val total: Int
         get() = price * count
 
+    fun changeStatus(status: OrderStatus): Order {
+        return Order(
+            id = id,
+            itemName = itemName,
+            price = price,
+            count = count,
+            status = status
+        )
+    }
+
     companion object {
         fun create(
             id: Int,

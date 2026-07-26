@@ -1,7 +1,9 @@
 package com.example.orderapi.presentation
 
 import com.example.orderapi.application.OrderService
+import com.example.orderapi.application.OrderUpdateStatusResult
 import com.example.orderapi.domain.OrderCreateResult
+import com.example.orderapi.domain.OrderStatus
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
@@ -9,6 +11,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.patch
+
 
 fun Route.orderRoutes(orderService: OrderService) {
     get("/orders") {
@@ -59,6 +63,46 @@ fun Route.orderRoutes(orderService: OrderService) {
                 call.respond(
                     status = HttpStatusCode.BadRequest,
                     message = ErrorResponse(result.error.message())
+                )
+            }
+        }
+    }
+
+    patch("/orders/{id}/status") {
+        val id = call.parameters["id"]?.toIntOrNull()
+
+        if (id == null) {
+            call.respond(
+                status = HttpStatusCode.BadRequest,
+                message = ErrorResponse("id must be an integer")
+            )
+            return@patch
+        }
+
+        val request = call.receive<UpdateOrderStatusRequest>()
+
+        val status = OrderStatus.entries.find { it.name == request.status }
+
+        if (status == null) {
+            call.respond(
+                status = HttpStatusCode.BadRequest,
+                message = ErrorResponse("status is invalid")
+            )
+            return@patch
+        }
+
+        when (val result = orderService.updateStatus(id, status)) {
+            is OrderUpdateStatusResult.Success -> {
+                call.respond(
+                    status = HttpStatusCode.OK,
+                    message = result.order.toResponse()
+                )
+            }
+
+            OrderUpdateStatusResult.NotFound -> {
+                call.respond(
+                    status = HttpStatusCode.NotFound,
+                    message = ErrorResponse("order not found")
                 )
             }
         }

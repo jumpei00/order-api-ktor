@@ -6,4 +6,5 @@ interface OrderRepository {
     fun findAll(): List<Order>
     fun findById(id: Int): Order?
     fun save(order: Order): Order
+    fun update(order: Order): Order?
 }

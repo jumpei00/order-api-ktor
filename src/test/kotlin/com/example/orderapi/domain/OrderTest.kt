@@ -67,4 +67,23 @@ class OrderTest {
 
         assertEquals(OrderError.InvalidCount, failure.error)
     }
+
+    @Test
+    fun `changeStatus returns order with new status`() {
+        val result = Order.create(
+            id = 1,
+            itemName = "Notebook",
+            price = 180,
+            count = 3,
+            status = OrderStatus.CREATED
+        )
+
+        val success = assertIs<OrderCreateResult.Success>(result)
+        val paidOrder = success.order.changeStatus(OrderStatus.PAID)
+
+        assertEquals(OrderStatus.CREATED, success.order.status)
+        assertEquals(OrderStatus.PAID, paidOrder.status)
+        assertEquals(success.order.id, paidOrder.id)
+        assertEquals(success.order.total, paidOrder.total)
+    }
 }

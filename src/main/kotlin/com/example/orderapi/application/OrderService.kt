@@ -38,5 +38,12 @@ class OrderService(
             is OrderCreateResult.Failure -> result
         }
     }
+
+    fun updateStatus(id: Int, status: OrderStatus): OrderUpdateStatusResult {
+        val order = orderRepository.findById(id) ?: return OrderUpdateStatusResult.NotFound
+        val updateOrder = order.changeStatus(status)
+        val savedOrder = orderRepository.update(updateOrder) ?: return OrderUpdateStatusResult.NotFound
+        return OrderUpdateStatusResult.Success(savedOrder)
+    }
 }
 

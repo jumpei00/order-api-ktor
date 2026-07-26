@@ -2,6 +2,7 @@ package com.example.orderapi
 
 import io.ktor.client.request.get
 import io.ktor.client.request.post
+import io.ktor.client.request.patch
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
@@ -77,4 +78,60 @@ class OrderApiTest {
         assertTrue(body.contains("\"total\":500"))
         assertTrue(body.contains("CREATED"))
     }
+
+    @Test
+    fun `PATCH order status updates existing order`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.patch("/orders/1/status") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"status":"PAID"}""")
+        }
+        val body = response.bodyAsText()
+
+        assertEquals(HttpStatusCode.OK, response.status)
+        assertTrue(body.contains("\"id\":1"))
+        assertTrue(body.contains("\"status\":\"PAID\""))
+
+        val getResponse = client.get("/orders/1")
+        val getBody = getResponse.bodyAsText()
+
+        assertEquals(HttpStatusCode.OK, getResponse.status)
+        assertTrue(getBody.contains("\"status\":\"PAID\""))
+    }
+
+    @Test
+    fun `PATCH order status returns not found`() = testApplication {
+        application {
+            module()
+        }
+
+        val response = client.patch("/orders/999/status") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"status":"PAID"}""")
+        }
+        val body = response.bodyAsText()
+
+        assertEquals(HttpStatusCode.NotFound, response.status)
+        assertTrue(body.contains("order not found"))
+    }
+
+    @Test
+    fun `PATCH order status returns bad request for invalid status`() =
+        testApplication {
+            application {
+                module()
+            }
+
+            val response = client.patch("/orders/1/status") {
+                contentType(ContentType.Application.Json)
+                setBody("""{"status":"UNKNOWN"}""")
+            }
+            val body = response.bodyAsText()
+
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            assertTrue(body.contains("status is invalid"))
+        }
 }

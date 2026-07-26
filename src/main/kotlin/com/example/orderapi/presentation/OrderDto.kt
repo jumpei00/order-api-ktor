@@ -35,3 +35,8 @@ fun OrderError.message(): String {
         OrderError.InvalidCount -> "count must be positive"
     }
 }
+
+@Serializable
+data class UpdateOrderStatusRequest(
+    val status: String
+)

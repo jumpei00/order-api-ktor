@@ -24,6 +24,17 @@ class InMemoryOrderRepository : OrderRepository {
         return order
     }
 
+    override fun update(order: Order): Order? {
+        val index = orders.indexOfFirst { it.id == order.id }
+
+        if (index == -1) {
+            return null
+        }
+
+        orders[index] = order
+        return order
+    }
+
     private fun createInitialOrder(
         id: Int,
         itemName: String,
