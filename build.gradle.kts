@@ -12,6 +12,12 @@ application {
     mainClass.set("com.example.orderapi.ApplicationKt")
 }
 
+ktor {
+  fatJar {
+    archiveFileName.set("app.jar")
+  }
+}
+
 kotlin {
     jvmToolchain(21)
 }
@@ -22,6 +28,15 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("ch.qos.logback:logback-classic:1.5.20")
+
+    implementation("org.postgresql:postgresql:42.7.13")
+    implementation("com.zaxxer:HikariCP:7.0.2")
+
+    implementation("org.jetbrains.exposed:exposed-core:1.3.1")
+    implementation("org.jetbrains.exposed:exposed-jdbc:1.3.1")
+
+    implementation("org.flywaydb:flyway-core:12.9.0")
+    implementation("org.flywaydb:flyway-database-postgresql:12.9.0")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test-junit5"))
