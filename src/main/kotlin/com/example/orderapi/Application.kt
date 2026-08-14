@@ -1,7 +1,9 @@
 package com.example.orderapi
 
-import com.example.orderapi.infrastructure.InMemoryOrderRepository
 import com.example.orderapi.application.OrderService
+import com.example.orderapi.infrastructure.InMemoryOrderRepository
+import com.example.orderapi.infrastructure.database.DatabaseMigrator
+import com.example.orderapi.infrastructure.database.DatabaseSettings
 import com.example.orderapi.presentation.orderRoutes
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
@@ -15,12 +17,18 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 
-fun main() {
-    val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+fun main(args: Array<String>) {
+    val command = args.firstOrNull() ?: "server"
 
-    embeddedServer(Netty, port = port) {
-        module()
-    }.start(wait = true)
+    when (command) {
+        "server" -> startServer()
+        "migrate" -> {
+            val settings = DatabaseSettings.fromEnvironment()
+            DatabaseMigrator.migrate(settings)
+        }
+
+        else -> error("unknown command: $command")
+    }
 }
 
 fun Application.module() {
@@ -41,4 +49,12 @@ fun Application.module() {
 
         orderRoutes(orderService)
     }
+}
+
+private fun startServer() {
+    val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+
+    embeddedServer(Netty, port = port) {
+        module()
+    }.start(wait = true)
 }

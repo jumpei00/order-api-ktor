@@ -1,20 +1,46 @@
 services:
-  app:
+  migrate:
     build:
       context: .
       target: runtime
     image: order-api-ktor:local
+    command:
+      - migrate
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: "no"
+  app:
+    image: order-api-ktor:local
+    command:
+      - server
     init: true
     environment:
       PORT: "8080"
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      DB_MAX_POOL_SIZE: ${DB_MAX_POOL_SIZE:-10}
     ports:
       - "127.0.0.1:${APP_PORT:-8080}:8080"
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       - backend
     read_only: true
@@ -51,5 +77,6 @@ services:
 networks:
   backend:
     driver: bridge
+
 volumes:
   postgres-data:
