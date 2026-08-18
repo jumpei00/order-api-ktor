@@ -1,6 +1,9 @@
 package com.example.orderapi
 
 import com.example.orderapi.application.OrderService
+import com.example.orderapi.application.OrderRepository
+import com.example.orderapi.infrastructure.database.DatabaseFactory
+import com.example.orderapi.infrastructure.database.PostgresOrderRepository
 import com.example.orderapi.infrastructure.InMemoryOrderRepository
 import com.example.orderapi.infrastructure.database.DatabaseMigrator
 import com.example.orderapi.infrastructure.database.DatabaseSettings
@@ -31,12 +34,11 @@ fun main(args: Array<String>) {
     }
 }
 
-fun Application.module() {
+fun Application.module(orderRepository: OrderRepository = InMemoryOrderRepository()) {
     install(ContentNegotiation) {
         json()
     }
 
-    val orderRepository = InMemoryOrderRepository()
     val orderService = OrderService(orderRepository)
 
     routing {
@@ -53,8 +55,13 @@ fun Application.module() {
 
 private fun startServer() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
+    val settings = DatabaseSettings.fromEnvironment()
 
-    embeddedServer(Netty, port = port) {
-        module()
-    }.start(wait = true)
+    DatabaseFactory(settings).use { databaseFactory ->
+        val orderRepository = PostgresOrderRepository(database = databaseFactory.database)
+
+        embeddedServer(Netty, port = port) {
+            module(orderRepository)
+        }.start(wait = true)
+    }
 }
