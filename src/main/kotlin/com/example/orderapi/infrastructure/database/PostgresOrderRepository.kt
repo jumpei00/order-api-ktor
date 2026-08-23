@@ -2,6 +2,7 @@ package com.example.orderapi.infrastructure.database
 
 import com.example.orderapi.application.OrderRepository
 import com.example.orderapi.domain.Order
+import com.example.orderapi.domain.OrderDraft
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -30,16 +31,18 @@ class PostgresOrderRepository(private val database: Database) : OrderRepository 
         }
     }
 
-    override fun save(order: Order): Order {
+    override fun save(draft: OrderDraft): Order {
         return transaction(db = database) {
-            OrdersTable.insert { statements ->
-                statements[OrdersTable.id] = order.id
-                statements[OrdersTable.itemName] = order.itemName
-                statements[OrdersTable.price] = order.price
-                statements[OrdersTable.count] = order.count
-                statements[OrdersTable.status] = order.status
+            val insertStatement = OrdersTable.insert { statements ->
+                statements[OrdersTable.itemName] = draft.itemName
+                statements[OrdersTable.price] = draft.price
+                statements[OrdersTable.count] = draft.count
+                statements[OrdersTable.status] = draft.status
             }
-            order
+
+            val generatedId = insertStatement[OrdersTable.id]
+
+            draft.toOrder(generatedId)
         }
     }
 

@@ -46,23 +46,77 @@ data class Order private constructor(
             count: Int,
             status: OrderStatus
         ): OrderCreateResult {
-            if (itemName.isBlank()) {
-                return OrderCreateResult.Failure(OrderError.BlankItemName)
+            val validationError = validateOrder(itemName, price, count)
+
+            if (validationError != null) {
+                return OrderCreateResult.Failure(validationError)
             }
 
-            if (price < 0) {
-                return OrderCreateResult.Failure(OrderError.NegativePrice)
-            }
-
-            if (count <= 0) {
-                return OrderCreateResult.Failure(OrderError.InvalidCount)
-            }
-
-            val order = Order(
-                id, itemName, price, count, status
-            )
+            val order = Order(id, itemName, price, count, status)
 
             return OrderCreateResult.Success(order)
         }
+    }
+}
+
+sealed interface OrderDraftResult {
+    data class Success(val draft: OrderDraft) : OrderDraftResult
+    data class Failure(val error: OrderError) : OrderDraftResult
+}
+
+class OrderDraft private constructor(
+    val itemName: String,
+    val price: Int,
+    val count: Int
+) {
+    val status: OrderStatus
+        get() = OrderStatus.CREATED
+
+    internal fun toOrder(id: Int): Order {
+        require(id > 0) {
+            "id must be positive"
+        }
+
+        return when (
+            val result = Order.create(
+                id, itemName, price, count, status
+            )
+        ) {
+            is OrderCreateResult.Success -> result.order
+            is OrderCreateResult.Failure -> {
+                error("invalid order draft: ${result.error}")
+            }
+        }
+    }
+
+    companion object {
+        fun create(
+            itemName: String,
+            price: Int,
+            count: Int
+        ): OrderDraftResult {
+            val validationError = validateOrder(itemName, price, count)
+
+            if (validationError != null) {
+                return OrderDraftResult.Failure(validationError)
+            }
+
+            val orderDraft = OrderDraft(itemName, price, count)
+
+            return OrderDraftResult.Success(orderDraft)
+        }
+    }
+}
+
+private fun validateOrder(
+    itemName: String,
+    price: Int,
+    count: Int
+): OrderError? {
+    return when {
+        itemName.isBlank() -> OrderError.BlankItemName
+        price < 0 -> OrderError.NegativePrice
+        count <= 0 -> OrderError.InvalidCount
+        else -> null
     }
 }

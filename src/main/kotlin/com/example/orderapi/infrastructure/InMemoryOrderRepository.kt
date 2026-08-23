@@ -3,6 +3,7 @@ package com.example.orderapi.infrastructure
 import com.example.orderapi.application.OrderRepository
 import com.example.orderapi.domain.Order
 import com.example.orderapi.domain.OrderCreateResult
+import com.example.orderapi.domain.OrderDraft
 import com.example.orderapi.domain.OrderStatus
 
 class InMemoryOrderRepository : OrderRepository {
@@ -19,8 +20,16 @@ class InMemoryOrderRepository : OrderRepository {
         return orders.find { it.id == id }
     }
 
-    override fun save(order: Order): Order {
+    override fun save(draft: OrderDraft): Order {
+        val nextId = orders
+            .maxOfOrNull { order -> order.id }
+            ?.plus(1)
+            ?: 1
+
+        val order = draft.toOrder(nextId)
+
         orders.add(order)
+
         return order
     }
 

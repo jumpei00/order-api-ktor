@@ -2,6 +2,8 @@ package com.example.orderapi.application
 
 import com.example.orderapi.domain.Order
 import com.example.orderapi.domain.OrderCreateResult
+import com.example.orderapi.domain.OrderDraft
+import com.example.orderapi.domain.OrderDraftResult
 import com.example.orderapi.domain.OrderStatus
 
 class OrderService(
@@ -20,22 +22,21 @@ class OrderService(
         price: Int,
         count: Int
     ): OrderCreateResult {
-        val nextId = orderRepository.findAll().maxOfOrNull { it.id }?.plus(1) ?: 1
-        val result = Order.create(
-            id = nextId,
+        val draftResult = OrderDraft.create(
             itemName = itemName,
             price = price,
             count = count,
-            status = OrderStatus.CREATED
         )
 
-        return when (result) {
-            is OrderCreateResult.Success -> {
-                val savedOrder = orderRepository.save(result.order)
+        return when (draftResult) {
+            is OrderDraftResult.Success -> {
+                val savedOrder = orderRepository.save(draftResult.draft)
                 OrderCreateResult.Success(savedOrder)
             }
 
-            is OrderCreateResult.Failure -> result
+            is OrderDraftResult.Failure -> {
+                OrderCreateResult.Failure(draftResult.error)
+            }
         }
     }
 

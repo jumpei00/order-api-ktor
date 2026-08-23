@@ -86,4 +86,33 @@ class OrderTest {
         assertEquals(success.order.id, paidOrder.id)
         assertEquals(success.order.total, paidOrder.total)
     }
+
+    @Test
+    fun `order draft is created without persisted id`() {
+        val result = OrderDraft.create(
+            itemName = "Notebook",
+            price = 180,
+            count = 3
+        )
+
+        val success = assertIs<OrderDraftResult.Success>(result)
+
+        assertEquals("Notebook", success.draft.itemName)
+        assertEquals(180, success.draft.price)
+        assertEquals(3, success.draft.count)
+        assertEquals(OrderStatus.CREATED, success.draft.status)
+    }
+
+    @Test
+    fun `order draft rejects blank item name`() {
+        val result = OrderDraft.create(
+            itemName = "",
+            price = 180,
+            count = 3
+        )
+
+        val failure = assertIs<OrderDraftResult.Failure>(result)
+
+        assertEquals(OrderError.BlankItemName, failure.error)
+    }
 }
