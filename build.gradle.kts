@@ -5,6 +5,7 @@ plugins {
     kotlin("jvm") version "2.2.20"
     kotlin("plugin.serialization") version "2.2.20"
     id("io.ktor.plugin") version "3.5.0"
+    id("org.jooq.jooq-codegen-gradle") version "3.21.9"
     application
 }
 
@@ -39,11 +40,45 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:1.3.1")
     implementation("org.jetbrains.exposed:exposed-java-time:1.3.1")
 
+    implementation("org.jooq:jooq:3.21.9")
+    implementation("org.jooq:jooq-kotlin:3.21.9")
+    jooqCodegen("org.postgresql:postgresql:42.7.13")
+
     implementation("org.flywaydb:flyway-core:12.9.0")
     implementation("org.flywaydb:flyway-database-postgresql:12.9.0")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test-junit5"))
+}
+
+jooq {
+    configuration {
+        jdbc {
+            driver = "org.postgresql.Driver"
+            url = System.getenv("JOOQ_DB_URL") ?: "jdbc:postgresql://localhost:5432/order_api"
+            user = System.getenv("DB_USER")
+            password = System.getenv("DB_PASSWORD")
+        }
+
+        generator {
+            name = "org.jooq.codegen.KotlinGenerator"
+
+            database {
+                name = "org.jooq.meta.postgres.PostgresDatabase"
+                inputSchema = "public"
+                excludes = "flyway_schema_history"
+            }
+
+            target {
+                packageName = "com.example.orderapi.infrastructure.database.jooq"
+                directory = "src/main/generated"
+            }
+        }
+    }
+}
+
+sourceSets.main {
+    kotlin.srcDir("src/main/generated")
 }
 
 tasks.test {
