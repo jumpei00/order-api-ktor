@@ -5,9 +5,15 @@
 package com.example.orderapi.infrastructure.database.jooq.tables.references
 
 
+import com.example.orderapi.infrastructure.database.jooq.tables.OrderStatusHistories
 import com.example.orderapi.infrastructure.database.jooq.tables.Orders
 
 
+
+/**
+ * The table <code>public.order_status_histories</code>.
+ */
+val ORDER_STATUS_HISTORIES: OrderStatusHistories = OrderStatusHistories.ORDER_STATUS_HISTORIES
 
 /**
  * The table <code>public.orders</code>.

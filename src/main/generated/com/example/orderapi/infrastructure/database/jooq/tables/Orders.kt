@@ -6,6 +6,8 @@ package com.example.orderapi.infrastructure.database.jooq.tables
 
 import com.example.orderapi.infrastructure.database.jooq.Public
 import com.example.orderapi.infrastructure.database.jooq.keys.ORDERS_PKEY
+import com.example.orderapi.infrastructure.database.jooq.keys.ORDER_STATUS_HISTORIES__ORDER_STATUS_HISTORIES_ORDER_ID_FKEY
+import com.example.orderapi.infrastructure.database.jooq.tables.OrderStatusHistories.OrderStatusHistoriesPath
 import com.example.orderapi.infrastructure.database.jooq.tables.records.OrdersRecord
 
 import java.time.OffsetDateTime
@@ -20,6 +22,7 @@ import org.jooq.ForeignKey
 import org.jooq.Identity
 import org.jooq.InverseForeignKey
 import org.jooq.Name
+import org.jooq.Path
 import org.jooq.PlainSQL
 import org.jooq.QueryPart
 import org.jooq.Record
@@ -127,9 +130,38 @@ open class Orders(
      * Create a <code>public.orders</code> table reference
      */
     constructor(): this(DSL.name("orders"), null)
+
+    constructor(path: Table<out Record>, childPath: ForeignKey<out Record, OrdersRecord>?, parentPath: InverseForeignKey<out Record, OrdersRecord>?): this(Internal.createPathAlias(path, childPath, parentPath), path, childPath, parentPath, ORDERS, null, null)
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    open class OrdersPath : Orders, Path<OrdersRecord> {
+        constructor(path: Table<out Record>, childPath: ForeignKey<out Record, OrdersRecord>?, parentPath: InverseForeignKey<out Record, OrdersRecord>?): super(path, childPath, parentPath)
+        private constructor(alias: Name, aliased: Table<OrdersRecord>): super(alias, aliased)
+        override fun `as`(alias: String): OrdersPath = OrdersPath(DSL.name(alias), this)
+        override fun `as`(alias: Name): OrdersPath = OrdersPath(alias, this)
+        override fun `as`(alias: Table<*>): OrdersPath = OrdersPath(alias.qualifiedName, this)
+    }
     override fun getSchema(): Schema? = if (aliased()) null else Public.PUBLIC
     override fun getIdentity(): Identity<OrdersRecord, Int?> = super.getIdentity() as Identity<OrdersRecord, Int?>
     override fun getPrimaryKey(): UniqueKey<OrdersRecord> = ORDERS_PKEY
+
+    private lateinit var _orderStatusHistories: OrderStatusHistoriesPath
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>public.order_status_histories</code> table
+     */
+    fun orderStatusHistories(): OrderStatusHistoriesPath {
+        if (!this::_orderStatusHistories.isInitialized)
+            _orderStatusHistories = OrderStatusHistoriesPath(this, null, ORDER_STATUS_HISTORIES__ORDER_STATUS_HISTORIES_ORDER_ID_FKEY.inverseKey)
+
+        return _orderStatusHistories;
+    }
+
+    val orderStatusHistories: OrderStatusHistoriesPath
+        get(): OrderStatusHistoriesPath = orderStatusHistories()
     override fun getChecks(): List<Check<OrdersRecord>> = listOf(
         Internal.createCheck(this, DSL.name("orders_count_positive"), "((count > 0))", true),
         Internal.createCheck(this, DSL.name("orders_item_name_not_blank"), "((btrim((item_name)::text) <> ''::text))", true),

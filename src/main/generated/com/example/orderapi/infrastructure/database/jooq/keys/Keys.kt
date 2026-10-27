@@ -5,12 +5,16 @@
 package com.example.orderapi.infrastructure.database.jooq.keys
 
 
+import com.example.orderapi.infrastructure.database.jooq.tables.OrderStatusHistories
 import com.example.orderapi.infrastructure.database.jooq.tables.Orders
+import com.example.orderapi.infrastructure.database.jooq.tables.records.OrderStatusHistoriesRecord
 import com.example.orderapi.infrastructure.database.jooq.tables.records.OrdersRecord
 
+import org.jooq.ForeignKey
 import org.jooq.UniqueKey
 import org.jooq.impl.DSL
 import org.jooq.impl.Internal
+import org.jooq.impl.QOM.ForeignKeyRule
 
 
 
@@ -18,4 +22,11 @@ import org.jooq.impl.Internal
 // UNIQUE and PRIMARY KEY definitions
 // -------------------------------------------------------------------------
 
+val ORDER_STATUS_HISTORIES_PKEY: UniqueKey<OrderStatusHistoriesRecord> = Internal.createUniqueKey(OrderStatusHistories.ORDER_STATUS_HISTORIES, DSL.name("order_status_histories_pkey"), arrayOf(OrderStatusHistories.ORDER_STATUS_HISTORIES.ID), true)
 val ORDERS_PKEY: UniqueKey<OrdersRecord> = Internal.createUniqueKey(Orders.ORDERS, DSL.name("orders_pkey"), arrayOf(Orders.ORDERS.ID), true)
+
+// -------------------------------------------------------------------------
+// FOREIGN KEY definitions
+// -------------------------------------------------------------------------
+
+val ORDER_STATUS_HISTORIES__ORDER_STATUS_HISTORIES_ORDER_ID_FKEY: ForeignKey<OrderStatusHistoriesRecord, OrdersRecord> = Internal.createForeignKey(OrderStatusHistories.ORDER_STATUS_HISTORIES, DSL.name("order_status_histories_order_id_fkey"), arrayOf(OrderStatusHistories.ORDER_STATUS_HISTORIES.ORDER_ID), com.example.orderapi.infrastructure.database.jooq.keys.ORDERS_PKEY, arrayOf(Orders.ORDERS.ID), true, ForeignKeyRule.NO_ACTION, ForeignKeyRule.NO_ACTION)

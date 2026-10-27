@@ -4,6 +4,7 @@
 package com.example.orderapi.infrastructure.database.jooq
 
 
+import com.example.orderapi.infrastructure.database.jooq.tables.OrderStatusHistories
 import com.example.orderapi.infrastructure.database.jooq.tables.Orders
 
 import kotlin.collections.List
@@ -28,6 +29,11 @@ open class Public : SchemaImpl(DSL.name("public"), DefaultCatalog.DEFAULT_CATALO
     }
 
     /**
+     * The table <code>public.order_status_histories</code>.
+     */
+    val ORDER_STATUS_HISTORIES: OrderStatusHistories get() = OrderStatusHistories.ORDER_STATUS_HISTORIES
+
+    /**
      * The table <code>public.orders</code>.
      */
     val ORDERS: Orders get() = Orders.ORDERS
@@ -35,6 +41,7 @@ open class Public : SchemaImpl(DSL.name("public"), DefaultCatalog.DEFAULT_CATALO
     override fun getCatalog(): Catalog = DefaultCatalog.DEFAULT_CATALOG
 
     override fun getTables(): List<Table<*>> = listOf(
+        OrderStatusHistories.ORDER_STATUS_HISTORIES,
         Orders.ORDERS
     )
 }
