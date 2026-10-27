@@ -2,7 +2,9 @@ package com.example.orderapi.infrastructure.database
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
-import org.jetbrains.exposed.v1.jdbc.Database
+import org.jooq.DSLContext
+import org.jooq.SQLDialect
+import org.jooq.impl.DSL
 
 class DatabaseFactory(settings: DatabaseSettings) : AutoCloseable {
     private val dataSource = HikariDataSource(
@@ -19,7 +21,7 @@ class DatabaseFactory(settings: DatabaseSettings) : AutoCloseable {
         }
     )
 
-    val database: Database = Database.connect(dataSource)
+    val dsl: DSLContext = DSL.using(dataSource, SQLDialect.POSTGRES)
 
     override fun close() {
         dataSource.close()

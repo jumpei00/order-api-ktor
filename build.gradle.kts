@@ -36,10 +36,6 @@ dependencies {
     implementation("org.postgresql:postgresql:42.7.13")
     implementation("com.zaxxer:HikariCP:7.0.2")
 
-    implementation("org.jetbrains.exposed:exposed-core:1.3.1")
-    implementation("org.jetbrains.exposed:exposed-jdbc:1.3.1")
-    implementation("org.jetbrains.exposed:exposed-java-time:1.3.1")
-
     implementation("org.jooq:jooq:3.21.9")
     implementation("org.jooq:jooq-kotlin:3.21.9")
     jooqCodegen("org.postgresql:postgresql:42.7.13")

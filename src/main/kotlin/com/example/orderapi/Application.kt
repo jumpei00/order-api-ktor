@@ -3,10 +3,10 @@ package com.example.orderapi
 import com.example.orderapi.application.OrderService
 import com.example.orderapi.application.OrderRepository
 import com.example.orderapi.infrastructure.database.DatabaseFactory
-import com.example.orderapi.infrastructure.database.PostgresOrderRepository
 import com.example.orderapi.infrastructure.InMemoryOrderRepository
 import com.example.orderapi.infrastructure.database.DatabaseMigrator
 import com.example.orderapi.infrastructure.database.DatabaseSettings
+import com.example.orderapi.infrastructure.database.OrderRepositoryImp
 import com.example.orderapi.presentation.orderRoutes
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
@@ -42,13 +42,6 @@ fun Application.module(orderRepository: OrderRepository = InMemoryOrderRepositor
     val orderService = OrderService(orderRepository)
 
     routing {
-        get("/") {
-            call.respondText(
-                text = "Order API is running",
-                contentType = ContentType.Text.Plain
-            )
-        }
-
         orderRoutes(orderService)
     }
 }
@@ -58,7 +51,7 @@ private fun startServer() {
     val settings = DatabaseSettings.fromEnvironment()
 
     DatabaseFactory(settings).use { databaseFactory ->
-        val orderRepository = PostgresOrderRepository(database = databaseFactory.database)
+        val orderRepository = OrderRepositoryImp(dsl = databaseFactory.dsl)
 
         embeddedServer(Netty, port = port) {
             module(orderRepository)
