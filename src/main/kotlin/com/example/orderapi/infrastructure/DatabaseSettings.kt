@@ -1,4 +1,4 @@
-package com.example.orderapi.infrastructure.database
+package com.example.orderapi.infrastructure
 
 data class DatabaseSettings(
     val jdbcUrl: String,

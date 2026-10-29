@@ -5,16 +5,18 @@ import com.example.orderapi.domain.OrderCreateResult
 import com.example.orderapi.domain.OrderDraft
 import com.example.orderapi.domain.OrderDraftResult
 import com.example.orderapi.domain.OrderStatus
+import com.example.orderapi.infrastructure.Database
 
 class OrderService(
+    private val database: Database,
     private val orderRepository: OrderRepository
 ) {
     fun listOrders(): List<Order> {
-        return orderRepository.findAll()
+        return database.transaction { ctx -> orderRepository.findAll(ctx) }
     }
 
     fun findOrder(id: Int): Order? {
-        return orderRepository.findById(id)
+        return database.transaction { ctx -> orderRepository.findById(ctx, id) }
     }
 
     fun createOrder(
@@ -30,7 +32,7 @@ class OrderService(
 
         return when (draftResult) {
             is OrderDraftResult.Success -> {
-                val savedOrder = orderRepository.save(draftResult.draft)
+                val savedOrder = database.transaction { ctx -> orderRepository.save(ctx, draftResult.draft) }
                 OrderCreateResult.Success(savedOrder)
             }
 
@@ -41,10 +43,12 @@ class OrderService(
     }
 
     fun updateStatus(id: Int, status: OrderStatus): OrderUpdateStatusResult {
-        val order = orderRepository.findById(id) ?: return OrderUpdateStatusResult.NotFound
-        val updateOrder = order.changeStatus(status)
-        val savedOrder = orderRepository.update(updateOrder) ?: return OrderUpdateStatusResult.NotFound
-        return OrderUpdateStatusResult.Success(savedOrder)
+        return database.transaction { ctx ->
+            val order = orderRepository.findById(ctx, id) ?: return@transaction OrderUpdateStatusResult.NotFound
+            val savedOrder = orderRepository.update(ctx, order.changeStatus(status))
+                ?: return@transaction OrderUpdateStatusResult.NotFound
+
+            OrderUpdateStatusResult.Success(savedOrder)
+        }
     }
 }
-

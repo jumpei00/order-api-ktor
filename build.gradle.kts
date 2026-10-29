@@ -45,6 +45,7 @@ dependencies {
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test-junit5"))
+    testImplementation("io.mockk:mockk:1.14.11")
 }
 
 jooq {
@@ -66,7 +67,7 @@ jooq {
             }
 
             target {
-                packageName = "com.example.orderapi.infrastructure.database.jooq"
+                packageName = "com.example.orderapi.infrastructure.jooq"
                 directory = "src/main/generated"
             }
         }

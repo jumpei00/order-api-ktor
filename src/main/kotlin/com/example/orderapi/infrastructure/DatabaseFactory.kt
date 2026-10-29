@@ -1,4 +1,4 @@
-package com.example.orderapi.infrastructure.database
+package com.example.orderapi.infrastructure
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -21,7 +21,9 @@ class DatabaseFactory(settings: DatabaseSettings) : AutoCloseable {
         }
     )
 
-    val dsl: DSLContext = DSL.using(dataSource, SQLDialect.POSTGRES)
+    private val dsl: DSLContext = DSL.using(dataSource, SQLDialect.POSTGRES)
+
+    val database: Database = Database(dsl)
 
     override fun close() {
         dataSource.close()

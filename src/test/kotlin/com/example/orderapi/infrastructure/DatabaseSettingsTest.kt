@@ -1,4 +1,4 @@
-package com.example.orderapi.infrastructure.database
+package com.example.orderapi.infrastructure
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

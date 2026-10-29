@@ -17,7 +17,7 @@ class OrderApiTest {
     @Test
     fun `Get orders returns order list`() = testApplication {
         application {
-            module()
+            module(fakeDatabase(), FakeOrderRepository())
         }
 
         val response = client.get("/orders")
@@ -31,7 +31,7 @@ class OrderApiTest {
     @Test
     fun `GET order by id returns one order`() = testApplication {
         application {
-            module()
+            module(fakeDatabase(), FakeOrderRepository())
         }
 
         val response = client.get("/orders/1")
@@ -45,7 +45,7 @@ class OrderApiTest {
     @Test
     fun `POST orders returns bad request when item name is blank`() = testApplication {
         application {
-            module()
+            module(fakeDatabase(), FakeOrderRepository())
         }
 
         val response = client.post("/orders") {
@@ -61,7 +61,7 @@ class OrderApiTest {
     @Test
     fun `POST orders creates order`() = testApplication {
         application {
-            module()
+            module(fakeDatabase(), FakeOrderRepository())
         }
 
         val response = client.post("/orders") {
@@ -82,7 +82,7 @@ class OrderApiTest {
     @Test
     fun `PATCH order status updates existing order`() = testApplication {
         application {
-            module()
+            module(fakeDatabase(), FakeOrderRepository())
         }
 
         val response = client.patch("/orders/1/status") {
@@ -105,7 +105,7 @@ class OrderApiTest {
     @Test
     fun `PATCH order status returns not found`() = testApplication {
         application {
-            module()
+            module(fakeDatabase(), FakeOrderRepository())
         }
 
         val response = client.patch("/orders/999/status") {
@@ -122,7 +122,7 @@ class OrderApiTest {
     fun `PATCH order status returns bad request for invalid status`() =
         testApplication {
             application {
-                module()
+                module(fakeDatabase(), FakeOrderRepository())
             }
 
             val response = client.patch("/orders/1/status") {

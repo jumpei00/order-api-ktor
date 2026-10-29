@@ -2,11 +2,11 @@ package com.example.orderapi
 
 import com.example.orderapi.application.OrderService
 import com.example.orderapi.application.OrderRepository
-import com.example.orderapi.infrastructure.database.DatabaseFactory
-import com.example.orderapi.infrastructure.InMemoryOrderRepository
-import com.example.orderapi.infrastructure.database.DatabaseMigrator
-import com.example.orderapi.infrastructure.database.DatabaseSettings
-import com.example.orderapi.infrastructure.database.OrderRepositoryImp
+import com.example.orderapi.infrastructure.Database
+import com.example.orderapi.infrastructure.DatabaseFactory
+import com.example.orderapi.infrastructure.DatabaseMigrator
+import com.example.orderapi.infrastructure.DatabaseSettings
+import com.example.orderapi.infrastructure.OrderRepositoryImp
 import com.example.orderapi.presentation.orderRoutes
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
@@ -34,12 +34,15 @@ fun main(args: Array<String>) {
     }
 }
 
-fun Application.module(orderRepository: OrderRepository = InMemoryOrderRepository()) {
+fun Application.module(
+    database: Database,
+    orderRepository: OrderRepository
+) {
     install(ContentNegotiation) {
         json()
     }
 
-    val orderService = OrderService(orderRepository)
+    val orderService = OrderService(database, orderRepository)
 
     routing {
         orderRoutes(orderService)
@@ -51,10 +54,10 @@ private fun startServer() {
     val settings = DatabaseSettings.fromEnvironment()
 
     DatabaseFactory(settings).use { databaseFactory ->
-        val orderRepository = OrderRepositoryImp(dsl = databaseFactory.dsl)
+        val orderRepository = OrderRepositoryImp()
 
         embeddedServer(Netty, port = port) {
-            module(orderRepository)
+            module(databaseFactory.database, orderRepository)
         }.start(wait = true)
     }
 }
