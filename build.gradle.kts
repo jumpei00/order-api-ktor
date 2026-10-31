@@ -46,6 +46,7 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test-junit5"))
     testImplementation("io.mockk:mockk:1.14.11")
+    testImplementation("org.testcontainers:testcontainers-postgresql:2.0.5")
 }
 
 jooq {

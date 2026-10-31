@@ -1,4 +1,4 @@
-package com.example.orderapi
+package com.example.orderapi.presentation
 
 import com.example.orderapi.application.OrderRepository
 import com.example.orderapi.domain.Order
@@ -19,6 +19,10 @@ class FakeOrderRepository : OrderRepository {
 
     override fun findById(ctx: DSLContext, id: Int): Order? {
         return orders.find { it.id == id }
+    }
+
+    override fun findByIdForUpdate(ctx: DSLContext, id: Int): Order? {
+        return findById(ctx, id)
     }
 
     override fun save(ctx: DSLContext, draft: OrderDraft): Order {

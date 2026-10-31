@@ -27,6 +27,15 @@ class OrderRepositoryImp : OrderRepository {
             ?.toOrder()
     }
 
+    override fun findByIdForUpdate(ctx: DSLContext, id: Int): Order? {
+        return ctx
+            .selectFrom(ORDERS)
+            .where(ORDERS.ID.eq(id))
+            .forUpdate()
+            .fetchOne()
+            ?.toOrder()
+    }
+
     override fun save(ctx: DSLContext, draft: OrderDraft): Order {
         return ctx.transactionResult { config ->
             val generatedId = config.dsl()

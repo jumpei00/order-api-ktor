@@ -2,11 +2,13 @@ package com.example.orderapi
 
 import com.example.orderapi.application.OrderService
 import com.example.orderapi.application.OrderRepository
+import com.example.orderapi.application.OrderStatusHistoryRepository
 import com.example.orderapi.infrastructure.Database
 import com.example.orderapi.infrastructure.DatabaseFactory
 import com.example.orderapi.infrastructure.DatabaseMigrator
 import com.example.orderapi.infrastructure.DatabaseSettings
 import com.example.orderapi.infrastructure.OrderRepositoryImp
+import com.example.orderapi.infrastructure.OrderStatusHistoryRepositoryImp
 import com.example.orderapi.presentation.orderRoutes
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
@@ -36,13 +38,14 @@ fun main(args: Array<String>) {
 
 fun Application.module(
     database: Database,
-    orderRepository: OrderRepository
+    orderRepository: OrderRepository,
+    orderStatusHistoryRepository: OrderStatusHistoryRepository
 ) {
     install(ContentNegotiation) {
         json()
     }
 
-    val orderService = OrderService(database, orderRepository)
+    val orderService = OrderService(database, orderRepository, orderStatusHistoryRepository)
 
     routing {
         orderRoutes(orderService)
@@ -55,9 +58,10 @@ private fun startServer() {
 
     DatabaseFactory(settings).use { databaseFactory ->
         val orderRepository = OrderRepositoryImp()
+        val orderStatusHistoryRepository = OrderStatusHistoryRepositoryImp()
 
         embeddedServer(Netty, port = port) {
-            module(databaseFactory.database, orderRepository)
+            module(databaseFactory.database, orderRepository, orderStatusHistoryRepository)
         }.start(wait = true)
     }
 }

@@ -1,5 +1,6 @@
-package com.example.orderapi
+package com.example.orderapi.presentation
 
+import com.example.orderapi.module
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.patch
@@ -9,6 +10,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.server.testing.testApplication
+import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -17,7 +19,7 @@ class OrderApiTest {
     @Test
     fun `Get orders returns order list`() = testApplication {
         application {
-            module(fakeDatabase(), FakeOrderRepository())
+            module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
         }
 
         val response = client.get("/orders")
@@ -31,7 +33,7 @@ class OrderApiTest {
     @Test
     fun `GET order by id returns one order`() = testApplication {
         application {
-            module(fakeDatabase(), FakeOrderRepository())
+            module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
         }
 
         val response = client.get("/orders/1")
@@ -45,7 +47,7 @@ class OrderApiTest {
     @Test
     fun `POST orders returns bad request when item name is blank`() = testApplication {
         application {
-            module(fakeDatabase(), FakeOrderRepository())
+            module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
         }
 
         val response = client.post("/orders") {
@@ -61,7 +63,7 @@ class OrderApiTest {
     @Test
     fun `POST orders creates order`() = testApplication {
         application {
-            module(fakeDatabase(), FakeOrderRepository())
+            module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
         }
 
         val response = client.post("/orders") {
@@ -82,7 +84,7 @@ class OrderApiTest {
     @Test
     fun `PATCH order status updates existing order`() = testApplication {
         application {
-            module(fakeDatabase(), FakeOrderRepository())
+            module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
         }
 
         val response = client.patch("/orders/1/status") {
@@ -105,7 +107,7 @@ class OrderApiTest {
     @Test
     fun `PATCH order status returns not found`() = testApplication {
         application {
-            module(fakeDatabase(), FakeOrderRepository())
+            module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
         }
 
         val response = client.patch("/orders/999/status") {
@@ -122,7 +124,7 @@ class OrderApiTest {
     fun `PATCH order status returns bad request for invalid status`() =
         testApplication {
             application {
-                module(fakeDatabase(), FakeOrderRepository())
+                module(fakeDatabase(), FakeOrderRepository(), mockk(relaxed = true))
             }
 
             val response = client.patch("/orders/1/status") {

@@ -9,7 +9,8 @@ import com.example.orderapi.infrastructure.Database
 
 class OrderService(
     private val database: Database,
-    private val orderRepository: OrderRepository
+    private val orderRepository: OrderRepository,
+    private val orderStatusHistoryRepository: OrderStatusHistoryRepository
 ) {
     fun listOrders(): List<Order> {
         return database.transaction { ctx -> orderRepository.findAll(ctx) }
@@ -44,9 +45,12 @@ class OrderService(
 
     fun updateStatus(id: Int, status: OrderStatus): OrderUpdateStatusResult {
         return database.transaction { ctx ->
-            val order = orderRepository.findById(ctx, id) ?: return@transaction OrderUpdateStatusResult.NotFound
+            val order = orderRepository.findByIdForUpdate(ctx, id)
+                ?: return@transaction OrderUpdateStatusResult.NotFound
             val savedOrder = orderRepository.update(ctx, order.changeStatus(status))
                 ?: return@transaction OrderUpdateStatusResult.NotFound
+
+            orderStatusHistoryRepository.append(ctx, savedOrder.id, savedOrder.status)
 
             OrderUpdateStatusResult.Success(savedOrder)
         }
