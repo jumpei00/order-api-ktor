@@ -7,9 +7,12 @@ import com.example.orderapi.domain.OrderStatus
 import com.example.orderapi.infrastructure.jooq.tables.records.OrdersRecord
 import com.example.orderapi.infrastructure.jooq.tables.references.ORDERS
 import com.github.michaelbull.result.getOrElse
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.jooq.DSLContext
 
-class OrderRepositoryImp : OrderRepository {
+@Singleton
+class OrderRepositoryImp @Inject constructor() : OrderRepository {
     override fun findAll(ctx: DSLContext): List<Order> {
         return ctx
             .selectFrom(ORDERS)

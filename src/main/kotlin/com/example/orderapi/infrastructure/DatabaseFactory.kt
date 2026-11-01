@@ -2,11 +2,14 @@ package com.example.orderapi.infrastructure
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
 import org.jooq.impl.DSL
 
-class DatabaseFactory(settings: DatabaseSettings) : AutoCloseable {
+@Singleton
+class DatabaseFactory @Inject constructor(settings: DatabaseSettings) : AutoCloseable {
     private val dataSource = HikariDataSource(
         HikariConfig().apply {
             jdbcUrl = settings.jdbcUrl

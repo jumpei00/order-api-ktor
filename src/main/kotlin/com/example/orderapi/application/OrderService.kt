@@ -10,12 +10,15 @@ import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.binding
 import com.github.michaelbull.result.map
 import com.github.michaelbull.result.toResultOr
+import jakarta.inject.Inject
+import jakarta.inject.Singleton
 
 sealed interface OrderUpdateStatusError {
     data object NotFound : OrderUpdateStatusError
 }
 
-class OrderService(
+@Singleton
+class OrderService @Inject constructor(
     private val database: Database,
     private val orderRepository: OrderRepository,
     private val orderStatusHistoryRepository: OrderStatusHistoryRepository

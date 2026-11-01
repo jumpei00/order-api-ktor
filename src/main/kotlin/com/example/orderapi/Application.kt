@@ -10,6 +10,7 @@ import com.example.orderapi.infrastructure.DatabaseSettings
 import com.example.orderapi.infrastructure.OrderRepositoryImp
 import com.example.orderapi.infrastructure.OrderStatusHistoryRepositoryImp
 import com.example.orderapi.presentation.orderRoutes
+import com.google.inject.Guice
 import io.ktor.http.ContentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
@@ -21,6 +22,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
+import org.jooq.kotlin.settings
 
 fun main(args: Array<String>) {
     val command = args.firstOrNull() ?: "server"
@@ -36,16 +38,10 @@ fun main(args: Array<String>) {
     }
 }
 
-fun Application.module(
-    database: Database,
-    orderRepository: OrderRepository,
-    orderStatusHistoryRepository: OrderStatusHistoryRepository
-) {
+fun Application.module(orderService: OrderService) {
     install(ContentNegotiation) {
         json()
     }
-
-    val orderService = OrderService(database, orderRepository, orderStatusHistoryRepository)
 
     routing {
         orderRoutes(orderService)
@@ -55,13 +51,13 @@ fun Application.module(
 private fun startServer() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: 8080
     val settings = DatabaseSettings.fromEnvironment()
+    val injector = Guice.createInjector(AppModule(settings))
 
-    DatabaseFactory(settings).use { databaseFactory ->
-        val orderRepository = OrderRepositoryImp()
-        val orderStatusHistoryRepository = OrderStatusHistoryRepositoryImp()
+    injector.getInstance(DatabaseFactory::class.java).use {
+        val orderService = injector.getInstance(OrderService::class.java)
 
         embeddedServer(Netty, port = port) {
-            module(databaseFactory.database, orderRepository, orderStatusHistoryRepository)
+            module(orderService)
         }.start(wait = true)
     }
 }
