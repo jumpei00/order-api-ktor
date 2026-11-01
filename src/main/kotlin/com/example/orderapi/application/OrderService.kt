@@ -1,11 +1,19 @@
 package com.example.orderapi.application
 
 import com.example.orderapi.domain.Order
-import com.example.orderapi.domain.OrderCreateResult
 import com.example.orderapi.domain.OrderDraft
-import com.example.orderapi.domain.OrderDraftResult
+import com.example.orderapi.domain.OrderError
 import com.example.orderapi.domain.OrderStatus
 import com.example.orderapi.infrastructure.Database
+import com.example.orderapi.infrastructure.transactionResult
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.binding
+import com.github.michaelbull.result.map
+import com.github.michaelbull.result.toResultOr
+
+sealed interface OrderUpdateStatusError {
+    data object NotFound : OrderUpdateStatusError
+}
 
 class OrderService(
     private val database: Database,
@@ -24,35 +32,29 @@ class OrderService(
         itemName: String,
         price: Int,
         count: Int
-    ): OrderCreateResult {
-        val draftResult = OrderDraft.create(
+    ): Result<Order, OrderError> {
+        return OrderDraft.create(
             itemName = itemName,
             price = price,
             count = count,
-        )
-
-        return when (draftResult) {
-            is OrderDraftResult.Success -> {
-                val savedOrder = database.transaction { ctx -> orderRepository.save(ctx, draftResult.draft) }
-                OrderCreateResult.Success(savedOrder)
-            }
-
-            is OrderDraftResult.Failure -> {
-                OrderCreateResult.Failure(draftResult.error)
-            }
-        }
+        ).map { draft -> database.transaction { ctx -> orderRepository.save(ctx, draft) } }
     }
 
-    fun updateStatus(id: Int, status: OrderStatus): OrderUpdateStatusResult {
-        return database.transaction { ctx ->
-            val order = orderRepository.findByIdForUpdate(ctx, id)
-                ?: return@transaction OrderUpdateStatusResult.NotFound
-            val savedOrder = orderRepository.update(ctx, order.changeStatus(status))
-                ?: return@transaction OrderUpdateStatusResult.NotFound
+    fun updateStatus(id: Int, status: OrderStatus): Result<Order, OrderUpdateStatusError> {
+        return database.transactionResult { ctx ->
+            binding {
+                val order = orderRepository.findByIdForUpdate(ctx, id)
+                    .toResultOr { OrderUpdateStatusError.NotFound }
+                    .bind()
 
-            orderStatusHistoryRepository.append(ctx, savedOrder.id, savedOrder.status)
+                val savedOrder = orderRepository.update(ctx, order.changeStatus(status))
+                    .toResultOr { OrderUpdateStatusError.NotFound }
+                    .bind()
 
-            OrderUpdateStatusResult.Success(savedOrder)
+                orderStatusHistoryRepository.append(ctx, savedOrder.id, savedOrder.status)
+
+                savedOrder
+            }
         }
     }
 }

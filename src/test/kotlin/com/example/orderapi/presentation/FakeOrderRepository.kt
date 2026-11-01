@@ -2,9 +2,13 @@ package com.example.orderapi.presentation
 
 import com.example.orderapi.application.OrderRepository
 import com.example.orderapi.domain.Order
-import com.example.orderapi.domain.OrderCreateResult
 import com.example.orderapi.domain.OrderDraft
+import com.example.orderapi.domain.OrderError
 import com.example.orderapi.domain.OrderStatus
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.map
+import kotlinx.serialization.json.internal.decodeByReader
 import org.jooq.DSLContext
 
 class FakeOrderRepository : OrderRepository {
@@ -56,9 +60,7 @@ class FakeOrderRepository : OrderRepository {
         count: Int,
         status: OrderStatus
     ): Order {
-        return when (val result = Order.create(id, itemName, price, count, status)) {
-            is OrderCreateResult.Success -> result.order
-            is OrderCreateResult.Failure -> error("invalid initial order: ${result.error}")
-        }
+        return Order.create(id, itemName, price, count, status)
+            .getOrElse { reason -> error("invalid initial order: $reason") }
     }
 }

@@ -1,5 +1,10 @@
 package com.example.orderapi.domain
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.getOrElse
+
 enum class OrderStatus {
     CREATED,
     PAID,
@@ -10,11 +15,6 @@ sealed interface OrderError {
     data object BlankItemName : OrderError
     data object NegativePrice : OrderError
     data object InvalidCount : OrderError
-}
-
-sealed interface OrderCreateResult {
-    data class Success(val order: Order) : OrderCreateResult
-    data class Failure(val error: OrderError) : OrderCreateResult
 }
 
 @ConsistentCopyVisibility
@@ -45,23 +45,16 @@ data class Order private constructor(
             price: Int,
             count: Int,
             status: OrderStatus
-        ): OrderCreateResult {
+        ): Result<Order, OrderError> {
             val validationError = validateOrder(itemName, price, count)
 
             if (validationError != null) {
-                return OrderCreateResult.Failure(validationError)
+                return Err(validationError)
             }
 
-            val order = Order(id, itemName, price, count, status)
-
-            return OrderCreateResult.Success(order)
+            return Ok(Order(id, itemName, price, count, status))
         }
     }
-}
-
-sealed interface OrderDraftResult {
-    data class Success(val draft: OrderDraft) : OrderDraftResult
-    data class Failure(val error: OrderError) : OrderDraftResult
 }
 
 class OrderDraft private constructor(
@@ -77,16 +70,8 @@ class OrderDraft private constructor(
             "id must be positive"
         }
 
-        return when (
-            val result = Order.create(
-                id, itemName, price, count, status
-            )
-        ) {
-            is OrderCreateResult.Success -> result.order
-            is OrderCreateResult.Failure -> {
-                error("invalid order draft: ${result.error}")
-            }
-        }
+        return Order.create(id, itemName, price, count, status)
+            .getOrElse { reason -> error("invalid order draft: $reason") }
     }
 
     companion object {
@@ -94,16 +79,14 @@ class OrderDraft private constructor(
             itemName: String,
             price: Int,
             count: Int
-        ): OrderDraftResult {
+        ): Result<OrderDraft, OrderError> {
             val validationError = validateOrder(itemName, price, count)
 
             if (validationError != null) {
-                return OrderDraftResult.Failure(validationError)
+                return Err(validationError)
             }
 
-            val orderDraft = OrderDraft(itemName, price, count)
-
-            return OrderDraftResult.Success(orderDraft)
+            return Ok(OrderDraft(itemName, price, count))
         }
     }
 }

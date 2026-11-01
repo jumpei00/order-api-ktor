@@ -1,9 +1,9 @@
 package com.example.orderapi.presentation
 
 import com.example.orderapi.application.OrderService
-import com.example.orderapi.application.OrderUpdateStatusResult
-import com.example.orderapi.domain.OrderCreateResult
+import com.example.orderapi.application.OrderUpdateStatusError
 import com.example.orderapi.domain.OrderStatus
+import com.github.michaelbull.result.mapBoth
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
@@ -47,25 +47,25 @@ fun Route.orderRoutes(orderService: OrderService) {
     post("/orders") {
         val request = call.receive<CreateOrderRequest>()
 
-        when (val result = orderService.createOrder(
+        orderService.createOrder(
             itemName = request.itemName,
             price = request.price,
             count = request.count
-        )) {
-            is OrderCreateResult.Success -> {
+        ).mapBoth(
+            { order ->
                 call.respond(
                     status = HttpStatusCode.Created,
-                    message = result.order.toResponse()
+                    message = order.toResponse()
                 )
-            }
-
-            is OrderCreateResult.Failure -> {
+            },
+            { error ->
                 call.respond(
                     status = HttpStatusCode.BadRequest,
-                    message = ErrorResponse(result.error.message())
+                    message = ErrorResponse(error.message())
                 )
+
             }
-        }
+        )
     }
 
     patch("/orders/{id}/status") {
@@ -91,20 +91,21 @@ fun Route.orderRoutes(orderService: OrderService) {
             return@patch
         }
 
-        when (val result = orderService.updateStatus(id, status)) {
-            is OrderUpdateStatusResult.Success -> {
+        orderService.updateStatus(id, status).mapBoth(
+            { order ->
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = result.order.toResponse()
+                    message = order.toResponse()
                 )
+            },
+            { error ->
+                when (error) {
+                    OrderUpdateStatusError.NotFound -> call.respond(
+                        status = HttpStatusCode.NotFound,
+                        message = ErrorResponse("order not found")
+                    )
+                }
             }
-
-            OrderUpdateStatusResult.NotFound -> {
-                call.respond(
-                    status = HttpStatusCode.NotFound,
-                    message = ErrorResponse("order not found")
-                )
-            }
-        }
+        )
     }
 }

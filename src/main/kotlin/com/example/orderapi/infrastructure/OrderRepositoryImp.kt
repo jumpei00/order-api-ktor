@@ -2,11 +2,11 @@ package com.example.orderapi.infrastructure
 
 import com.example.orderapi.application.OrderRepository
 import com.example.orderapi.domain.Order
-import com.example.orderapi.domain.OrderCreateResult
 import com.example.orderapi.domain.OrderDraft
 import com.example.orderapi.domain.OrderStatus
 import com.example.orderapi.infrastructure.jooq.tables.records.OrdersRecord
 import com.example.orderapi.infrastructure.jooq.tables.references.ORDERS
+import com.github.michaelbull.result.getOrElse
 import org.jooq.DSLContext
 
 class OrderRepositoryImp : OrderRepository {
@@ -69,17 +69,12 @@ class OrderRepositoryImp : OrderRepository {
 }
 
 private fun OrdersRecord.toOrder(): Order {
-    val result = Order.create(
+    return Order.create(
         id = id!!,
         itemName = itemName!!,
         price = price!!,
         count = count!!,
         status = OrderStatus.valueOf(status!!)
-    )
-
-    return when (result) {
-        is OrderCreateResult.Success -> result.order
-        is OrderCreateResult.Failure -> error("invalid order row: id=$id, reason=${result.error}")
-    }
+    ).getOrElse { reason -> error("invalid order row: id=$id, reason=$reason") }
 }
 

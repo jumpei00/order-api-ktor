@@ -1,26 +1,28 @@
 package com.example.orderapi.domain
 
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Result
+import com.github.michaelbull.result.getOrElse
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.fail
 
 class OrderTest {
     @Test
-    fun `create returns success when values are valid`() {
-        val result = Order.create(
+    fun `create returns ok when values are valid`() {
+        val order = Order.create(
             id = 1,
             itemName = "Notebook",
             price = 180,
             count = 3,
             status = OrderStatus.CREATED
-        )
+        ).okOrFail()
 
-        val success = assertIs<OrderCreateResult.Success>(result)
-
-        assertEquals(1, success.order.id)
-        assertEquals("Notebook", success.order.itemName)
-        assertEquals(540, success.order.total)
-        assertEquals(OrderStatus.CREATED, success.order.status)
+        assertEquals(1, order.id)
+        assertEquals("Notebook", order.itemName)
+        assertEquals(540, order.total)
+        assertEquals(OrderStatus.CREATED, order.status)
     }
 
     @Test
@@ -33,9 +35,7 @@ class OrderTest {
             status = OrderStatus.CREATED
         )
 
-        val failure = assertIs<OrderCreateResult.Failure>(result)
-
-        assertEquals(OrderError.BlankItemName, failure.error)
+        assertEquals(Err(OrderError.BlankItemName), result)
     }
 
     @Test
@@ -48,9 +48,7 @@ class OrderTest {
             status = OrderStatus.CREATED
         )
 
-        val failure = assertIs<OrderCreateResult.Failure>(result)
-
-        assertEquals(OrderError.NegativePrice, failure.error)
+        assertEquals(Err(OrderError.NegativePrice), result)
     }
 
     @Test
@@ -63,44 +61,39 @@ class OrderTest {
             status = OrderStatus.CREATED
         )
 
-        val failure = assertIs<OrderCreateResult.Failure>(result)
-
-        assertEquals(OrderError.InvalidCount, failure.error)
+        assertEquals(Err(OrderError.InvalidCount), result)
     }
 
     @Test
     fun `changeStatus returns order with new status`() {
-        val result = Order.create(
+        val order = Order.create(
             id = 1,
             itemName = "Notebook",
             price = 180,
             count = 3,
             status = OrderStatus.CREATED
-        )
+        ).okOrFail()
 
-        val success = assertIs<OrderCreateResult.Success>(result)
-        val paidOrder = success.order.changeStatus(OrderStatus.PAID)
+        val paidOrder = order.changeStatus(OrderStatus.PAID)
 
-        assertEquals(OrderStatus.CREATED, success.order.status)
+        assertEquals(OrderStatus.CREATED, order.status)
         assertEquals(OrderStatus.PAID, paidOrder.status)
-        assertEquals(success.order.id, paidOrder.id)
-        assertEquals(success.order.total, paidOrder.total)
+        assertEquals(order.id, paidOrder.id)
+        assertEquals(order.total, paidOrder.total)
     }
 
     @Test
     fun `order draft is created without persisted id`() {
-        val result = OrderDraft.create(
+        val draft = OrderDraft.create(
             itemName = "Notebook",
             price = 180,
             count = 3
-        )
+        ).okOrFail()
 
-        val success = assertIs<OrderDraftResult.Success>(result)
-
-        assertEquals("Notebook", success.draft.itemName)
-        assertEquals(180, success.draft.price)
-        assertEquals(3, success.draft.count)
-        assertEquals(OrderStatus.CREATED, success.draft.status)
+        assertEquals("Notebook", draft.itemName)
+        assertEquals(180, draft.price)
+        assertEquals(3, draft.count)
+        assertEquals(OrderStatus.CREATED, draft.status)
     }
 
     @Test
@@ -111,8 +104,10 @@ class OrderTest {
             count = 3
         )
 
-        val failure = assertIs<OrderDraftResult.Failure>(result)
+        assertEquals(Err(OrderError.BlankItemName), result)
+    }
 
-        assertEquals(OrderError.BlankItemName, failure.error)
+    private fun <V> Result<V, OrderError>.okOrFail(): V {
+        return getOrElse { reason -> fail("expected Ok but was Err($reason)") }
     }
 }

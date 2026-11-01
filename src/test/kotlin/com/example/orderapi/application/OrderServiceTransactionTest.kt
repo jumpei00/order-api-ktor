@@ -1,6 +1,6 @@
 package com.example.orderapi.application
 
-import com.example.orderapi.domain.OrderCreateResult
+import com.example.orderapi.domain.OrderDraft
 import com.example.orderapi.domain.OrderStatus
 import com.example.orderapi.infrastructure.DatabaseFactory
 import com.example.orderapi.infrastructure.DatabaseMigrator
@@ -9,6 +9,11 @@ import com.example.orderapi.infrastructure.OrderRepositoryImp
 import com.example.orderapi.infrastructure.OrderStatusHistoryRepositoryImp
 import com.example.orderapi.infrastructure.jooq.tables.references.ORDERS
 import com.example.orderapi.infrastructure.jooq.tables.references.ORDER_STATUS_HISTORIES
+import com.example.orderapi.infrastructure.transactionResult
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.Ok
+import com.github.michaelbull.result.getOrElse
+import com.github.michaelbull.result.mapBoth
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.AfterAll
@@ -16,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.fail
 import org.testcontainers.postgresql.PostgreSQLContainer
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -89,14 +95,53 @@ class OrderServiceTransactionTest {
         assertEquals(0, countHistories())
     }
 
+    @Test
+    fun `transactionResult rolls back when the block returns Err`() {
+        val draft = OrderDraft.create(itemName = "pen", price = 100, count = 2)
+            .getOrElse { reason -> fail("expected Ok but was Err($reason)") }
+
+        val result = databaseFactory.database.transactionResult { ctx ->
+            OrderRepositoryImp().save(ctx, draft)
+            Err("business failure")
+        }
+
+        val error = result.mapBoth(
+            { value -> fail("expected Err but was Ok($value)") },
+            { reason -> reason }
+        )
+
+        assertEquals("business failure", error)
+        assertEquals(0, countOrders())
+    }
+
+    @Test
+    fun `transactionResult commits when the block returns Ok`() {
+        val draft = OrderDraft.create(itemName = "pen", price = 100, count = 2)
+            .getOrElse { reason -> fail("expected Ok but was Err($reason)") }
+
+        databaseFactory.database.transactionResult { ctx ->
+            Ok(OrderRepositoryImp().save(ctx, draft))
+        }
+
+        assertEquals(1, countOrders())
+    }
+
     private fun createOrder(service: OrderService): Int {
-        val result = service.createOrder(itemName = "pen", price = 100, count = 2)
-        return (result as OrderCreateResult.Success).order.id
+        return service.createOrder(itemName = "pen", price = 100, count = 2)
+            .getOrElse { reason -> fail("expected Ok but wa Err($reason)") }
+            .id
+
     }
 
     private fun countHistories(): Int {
         return databaseFactory.database.transaction { ctx ->
             ctx.fetchCount(ORDER_STATUS_HISTORIES)
+        }
+    }
+
+    private fun countOrders(): Int {
+        return databaseFactory.database.transaction { ctx ->
+            ctx.fetchCount(ORDERS)
         }
     }
 }

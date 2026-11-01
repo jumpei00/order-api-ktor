@@ -42,6 +42,7 @@ dependencies {
 
     implementation("org.flywaydb:flyway-core:12.9.0")
     implementation("org.flywaydb:flyway-database-postgresql:12.9.0")
+    implementation("com.michael-bull.kotlin-result:kotlin-result:2.3.1")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test-junit5"))
