@@ -136,4 +136,60 @@ class OrderApiTest {
             assertEquals(HttpStatusCode.BadRequest, response.status)
             assertTrue(body.contains("status is invalid"))
         }
+
+    @Test
+    fun `POST orders returns bad request when a required field is missing`() = testApplication {
+        application {
+            module(fakeOrderService())
+        }
+
+        val response = client.post("/orders") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"itemName":"pen","price":100}""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun `POST orders returns bad request when the body is not valid json`() = testApplication {
+        application {
+            module(fakeOrderService())
+        }
+
+        val response = client.post("/orders") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"itemName":""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun `POST orders returns bad request when a number is sent as a string`() = testApplication {
+        application {
+            module(fakeOrderService())
+        }
+
+        val response = client.post("/orders") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"itemName":"pen","price":"100","count":2}""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
+
+    @Test
+    fun `POST orders returns bad request when an unknown field is sent`() = testApplication {
+        application {
+            module(fakeOrderService())
+        }
+
+        val response = client.post("/orders") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"itemName":"pen","price":100,"count":2,"extra":true}""")
+        }
+
+        assertEquals(HttpStatusCode.BadRequest, response.status)
+    }
 }

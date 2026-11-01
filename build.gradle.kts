@@ -3,7 +3,6 @@ import org.gradle.api.file.DuplicatesStrategy
 
 plugins {
     kotlin("jvm") version "2.2.20"
-    kotlin("plugin.serialization") version "2.2.20"
     id("io.ktor.plugin") version "3.5.0"
     id("org.jooq.jooq-codegen-gradle") version "3.21.9"
     application
@@ -30,7 +29,6 @@ dependencies {
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
     implementation("io.ktor:ktor-server-content-negotiation")
-    implementation("io.ktor:ktor-serialization-kotlinx-json")
     implementation("ch.qos.logback:logback-classic:1.5.20")
 
     implementation("org.postgresql:postgresql:42.7.13")
@@ -45,6 +43,9 @@ dependencies {
     implementation("com.michael-bull.kotlin-result:kotlin-result:2.3.1")
 
     implementation("com.google.inject:guice:7.0.0")
+
+    implementation("io.ktor:ktor-serialization-jackson")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.22.4")
 
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation(kotlin("test-junit5"))

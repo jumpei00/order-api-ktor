@@ -12,7 +12,7 @@ import com.example.orderapi.infrastructure.OrderStatusHistoryRepositoryImp
 import com.example.orderapi.presentation.orderRoutes
 import com.google.inject.Guice
 import io.ktor.http.ContentType
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.application.install
@@ -22,7 +22,9 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
-import org.jooq.kotlin.settings
+import com.fasterxml.jackson.databind.cfg.CoercionAction
+import com.fasterxml.jackson.databind.cfg.CoercionInputShape
+import com.fasterxml.jackson.databind.type.LogicalType
 
 fun main(args: Array<String>) {
     val command = args.firstOrNull() ?: "server"
@@ -40,7 +42,10 @@ fun main(args: Array<String>) {
 
 fun Application.module(orderService: OrderService) {
     install(ContentNegotiation) {
-        json()
+        jackson {
+            coercionConfigFor(LogicalType.Integer)
+                .setCoercion(CoercionInputShape.String, CoercionAction.Fail)
+        }
     }
 
     routing {

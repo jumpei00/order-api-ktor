@@ -2,9 +2,7 @@ package com.example.orderapi.presentation
 
 import com.example.orderapi.domain.Order
 import com.example.orderapi.domain.OrderError
-import kotlinx.serialization.Serializable
 
-@Serializable
 data class OrderResponse(
     val id: Int,
     val itemName: String,
@@ -12,14 +10,12 @@ data class OrderResponse(
     val status: String
 )
 
-@Serializable
 data class CreateOrderRequest(
     val itemName: String,
     val price: Int,
     val count: Int
 )
 
-@Serializable
 data class ErrorResponse(
     val message: String
 )
@@ -36,7 +32,6 @@ fun OrderError.message(): String {
     }
 }
 
-@Serializable
 data class UpdateOrderStatusRequest(
     val status: String
 )

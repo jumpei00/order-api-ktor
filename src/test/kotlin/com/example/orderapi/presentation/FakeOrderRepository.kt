@@ -8,7 +8,6 @@ import com.example.orderapi.domain.OrderStatus
 import com.github.michaelbull.result.Result
 import com.github.michaelbull.result.getOrElse
 import com.github.michaelbull.result.map
-import kotlinx.serialization.json.internal.decodeByReader
 import org.jooq.DSLContext
 
 class FakeOrderRepository : OrderRepository {
